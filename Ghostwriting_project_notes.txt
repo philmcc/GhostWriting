@@ -1,0 +1,159 @@
+
+Get dataset
+Test Learning
+
+Generate dataset:
+
+- Download texts from multiple authors
+- preprocess files to remove junk
+- split into 100 line files with author name followed by ‘_’ then a suffix
+    - split -l 100  alexandredumas.txt alexandredumas_
+
+How many authors?
+
+Want 1000 rows to test
+500 same
+500 different
+
+DAtaset
+Old_metrics, new_metrics, output
+
+
+
+
+## Example of splitting a text file into chunks:
+split -l 200 AlexandreDumas.txt AlexandreDumas_
+
+
+##Create a table to take the raw metrics:
+CREATE TABLE paper_metrics (
+    Author        varchar(500) NOT NULL,
+    Title       varchar(500) NOT NULL,
+    LexicalDiversity float,     
+    MeanWordLen float,
+    MeanSentenceLen float,
+    StdevSentenceLen float,
+    MeanParagraphLen float,
+    DocumentLen float,
+    Commas float,
+    Semicolons float,
+    Quotes float,
+    Exclamations float,
+    Colons float,
+    Dashes float,
+    Mdashes float,
+    Ands float,
+    Buts float,
+    Howevers float,
+    Ifs float,
+    Thats float,
+    Mores float,
+    Musts float,
+    Mights float,
+    This float,
+    Verys  float
+    );
+
+## Copy the csv into postgres
+
+COPY paper_metrics(Author,Title,LexicalDiversity,MeanWordLen,MeanSentenceLen,StdevSentenceLen,MeanParagraphLen,DocumentLen,Commas,Semicolons,Quotes,Exclamations,Colons,Dashes,Mdashes,Ands,Buts,Howevers,Ifs,Thats,Mores,Musts,Mights,This,Verys) from '/Users/pmcclarence/philmccgit/machinelearning/Projects/Ghostwriting/all_files.csv' DELIMITER ',' CSV HEADER;
+
+
+
+## Tidy up the data by setting the author correctly
+
+update paper_metrics set  author = trim(leading '/Users/pmcclarence/philmccgit/machinelearning/Projects/Ghostwriting/txtfiles/split/' from title) ;
+update paper_metrics set author = substr(author,0 ,length(author)-2);
+
+
+
+
+
+a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys
+
+
+
+## Generate a random selection of rows for dataset:
+\t
+\o dataset1.csv
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys, 1 from paper_metrics_tidy a, paper_metrics_tidy b where a.author != b.author order by random() limit 1000;
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys,0 from paper_metrics_tidy a, paper_metrics_tidy b where a.author = b.author order by random() limit 1000;
+
+
+
+#####################
+#####################
+# Machine Learning
+#####################
+#####################
+
+Import Libraries
+Load dataset
+
+Summarise to check data
+
+Split-out validation dataset
+Set test options and evaluation metric - k-fold cross validation
+
+Test and tune Linear models
+Test and tune regression models
+Test and tune Ensembles
+
+
+#####################
+#####################
+# Doing some testing
+#####################
+#####################
+
+
+\t
+\o test_data_diff.csv
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys, 1 from paper_metrics_tidy a, paper_metrics_tidy b where a.author != b.author order by random() limit 50;
+
+\t
+\o test_data_same.csv
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys,0 from paper_metrics_tidy a, paper_metrics_tidy b where a.author = b.author order by random() limit 50;
+
+
+\t
+\o test_data_diff_big.csv
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys, 1 from paper_metrics_tidy a, paper_metrics_tidy b where a.author != b.author order by random() limit 40000;
+
+
+\o test_data_same_big.csv
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys,0 from paper_metrics_tidy a, paper_metrics_tidy b where a.author = b.author order by random() limit 40000;
+
+
+\t
+\o test_data_comb_big.csv
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys, 1 from paper_metrics_tidy a, paper_metrics_tidy b where a.author != b.author order by random() limit 40000;
+select a.LexicalDiversity,a.MeanWordLen,a.MeanSentenceLen,a.StdevSentenceLen,a.MeanParagraphLen,a.DocumentLen,a.Commas,a.Semicolons,a.Quotes,a.Exclamations,a.Colons,a.Dashes,a.Mdashes,a.Ands,a.Buts,a.Howevers,a.Ifs,a.Thats,a.Mores,a.Musts,a.Mights,a.This,a.Verys,
+b.LexicalDiversity,b.MeanWordLen,b.MeanSentenceLen,b.StdevSentenceLen,b.MeanParagraphLen,b.DocumentLen,b.Commas,b.Semicolons,b.Quotes,b.Exclamations,b.Colons,b.Dashes,b.Mdashes,b.Ands,b.Buts,b.Howevers,b.Ifs,b.Thats,b.Mores,b.Musts,b.Mights,b.This,b.Verys,0 from paper_metrics_tidy a, paper_metrics_tidy b where a.author = b.author order by random() limit 40000;
+
+
+#####################
+#####################
+# Later
+#####################
+#####################
+ - 
+Visualizations
+Prune inputs
+Deep Learning
+Consensus of algorithms
+
+
+
+
+
+
+
