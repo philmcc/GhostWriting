@@ -21,24 +21,23 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 # b) Load dataset
-url = "dataset1.csv"
+url = "/Users/pmcclarence/philmccgit/GhostWriting/csvs/training_dataset_03.csv"
 
 names = ['a.LexicalDiversity','a.MeanWordLen','a.MeanSentenceLen','a.StdevSentenceLen','a.MeanParagraphLen','a.DocumentLen','a.Commas','a.Semicolons','a.Quotes','a.Exclamations','a.Colons','a.Dashes','a.Mdashes','a.Ands','a.Buts','a.Howevers','a.Ifs','a.Thats','a.Mores','a.Musts','a.Mights','a.This','a.Verys',
 'b.LexicalDiversity','b.MeanWordLen','b.MeanSentenceLen','b.StdevSentenceLen','b.MeanParagraphLen','b.DocumentLen','b.Commas','b.Semicolons','b.Quotes','b.Exclamations','b.Colons','b.Dashes','b.Mdashes','b.Ands','b.Buts','b.Howevers','b.Ifs','b.Thats','b.Mores','b.Musts','b.Mights','b.This','b.Verys', 'Output']
 
- 
+
 dataset = pandas.read_csv(url, names=names, delimiter='|')
-######
-# 2. Summarize Data
-######
-# a) Descriptive statistics
+
 pandas.set_option('display.width', 180)
 # shape
-
+print "\nData Shape: "
 print(dataset.shape)
 # head
-#print(dataset.head(20))
+print"\ntop 10 rows of the dataset:"
+print(dataset.head(20))
 # descriptions
+print"\nDescribe the data"
 print(dataset.describe())
-# class distribution
+print"\nClass distribution"
 print(dataset.groupby('Output').size())
