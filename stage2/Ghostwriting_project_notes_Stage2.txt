@@ -1,0 +1,122 @@
+
+
+# Generating a new dataset based on 3 papers by the same author then one target paper
+
+Plan:
+import data
+split immediatly into trainin and testing sets
+Generate training set
+
+Run all algorithms on it
+Run xgboost
+run Nerual net and start to tune (extra learning step)
+
+assess best model and improvement over previous dataset if any
+
+
+##Create a table to take the raw metrics:
+CREATE TABLE paper_metrics (
+    id serial primary key,
+    Author        varchar(500) NOT NULL,
+    Title       varchar(500) NOT NULL,
+    LexicalDiversity float,     
+    MeanWordLen float,
+    MeanSentenceLen float,
+    StdevSentenceLen float,
+    MeanParagraphLen float,
+    DocumentLen float,
+    Commas float,
+    Semicolons float,
+    Quotes float,
+    Exclamations float,
+    Colons float,
+    Dashes float,
+    Mdashes float,
+    Ands float,
+    Buts float,
+    Howevers float,
+    Ifs float,
+    Thats float,
+    Mores float,
+    Musts float,
+    Mights float,
+    This float,
+    Verys  float
+    );
+
+## Copy the csv into postgres
+## Data already in papermetrics and paper metrics clean - so split from there into train/test
+
+## Tidy up the data by setting the author correctly
+
+#create table paper_metrics_clean as select * from paper_metrics;
+#update paper_metrics_clean set author = trim(leading '/Users/pmcclarence/Vagrantboxes/GW/vagrant/books/split/' from title) ;
+#update paper_metrics_clean set author = substr(author,0 ,length(author)-2);
+
+
+drop table paper_metrics_TRAINING;
+create table paper_metrics_TRAINING as select * from paper_metrics_clean order by random() 
+limit ((select count(*) from paper_metrics_clean)*0.9);
+drop table paper_metrics_testing;
+create table paper_metrics_testing as select * from paper_metrics_clean where id not in (select id from paper_metrics_training);
+
+
+CREATE or replace FUNCTION generate_stage_2_training_data(integer)
+RETURNS INTEGER AS $$
+
+BEGIN
+
+    drop table stage_2_training_dataset;
+
+    create table stage_2_training_dataset as
+    with seed_author as
+(select s.author from paper_metrics_TRAINING s order by random() limit 1)
+    select
+        a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen, a.MeanSentenceLen a_MeanSentenceLen, a.MeanParagraphLen a_MeanParagraphLen, a.DocumentLen a_DocumentLen, a.Commas a_Commas,  a.Semicolons a_Semicolons, a.Exclamations a_Exclamations, a.Buts a_Buts, a.Thats a_Thats, a.This a_This,
+        b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen, b.MeanSentenceLen b_MeanSentenceLen, b.MeanParagraphLen b_MeanParagraphLen, b.DocumentLen b_DocumentLen, b.Commas b_Commas,  b.Semicolons b_Semicolons, b.Exclamations b_Exclamations, b.Buts b_Buts, b.Thats b_Thats, b.This b_This,
+        c.LexicalDiversity c_LexicalDiversity,c.MeanWordLen c_MeanWordLen, c.MeanSentenceLen c_MeanSentenceLen, c.MeanParagraphLen c_MeanParagraphLen, c.DocumentLen c_DocumentLen, c.Commas c_Commas,  c.Semicolons c_Semicolons, c.Exclamations c_Exclamations, c.Buts c_Buts, c.Thats c_Thats, c.This c_This,
+        d.LexicalDiversity d_LexicalDiversity,d.MeanWordLen d_MeanWordLen, d.MeanSentenceLen d_MeanSentenceLen, d.MeanParagraphLen d_MeanParagraphLen, d.DocumentLen d_DocumentLen, d.Commas d_Commas,  d.Semicolons d_Semicolons, d.Exclamations d_Exclamations, d.Buts d_Buts, d.Thats d_Thats, d.This d_This,
+        1 output
+    FROM  (select * from paper_metrics_TRAINING  where author =(select author from seed_author) order by random() limit 1) a,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) b,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) c,
+            (select * from paper_metrics_TRAINING where author !=(select author from seed_author) order by random() limit 1) d
+    ORDER BY random() limit 1;
+
+    for i in 1..$1 LOOP
+        insert into stage_2_training_dataset with seed_author as
+(select s.author from paper_metrics_TRAINING s order by random() limit 1)
+    select
+        a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen, a.MeanSentenceLen a_MeanSentenceLen, a.MeanParagraphLen a_MeanParagraphLen, a.DocumentLen a_DocumentLen, a.Commas a_Commas,  a.Semicolons a_Semicolons, a.Exclamations a_Exclamations, a.Buts a_Buts, a.Thats a_Thats, a.This a_This,
+        b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen, b.MeanSentenceLen b_MeanSentenceLen, b.MeanParagraphLen b_MeanParagraphLen, b.DocumentLen b_DocumentLen, b.Commas b_Commas,  b.Semicolons b_Semicolons, b.Exclamations b_Exclamations, b.Buts b_Buts, b.Thats b_Thats, b.This b_This,
+        c.LexicalDiversity c_LexicalDiversity,c.MeanWordLen c_MeanWordLen, c.MeanSentenceLen c_MeanSentenceLen, c.MeanParagraphLen c_MeanParagraphLen, c.DocumentLen c_DocumentLen, c.Commas c_Commas,  c.Semicolons c_Semicolons, c.Exclamations c_Exclamations, c.Buts c_Buts, c.Thats c_Thats, c.This c_This,
+        d.LexicalDiversity d_LexicalDiversity,d.MeanWordLen d_MeanWordLen, d.MeanSentenceLen d_MeanSentenceLen, d.MeanParagraphLen d_MeanParagraphLen, d.DocumentLen d_DocumentLen, d.Commas d_Commas,  d.Semicolons d_Semicolons, d.Exclamations d_Exclamations, d.Buts d_Buts, d.Thats d_Thats, d.This d_This,
+        1 output
+    FROM  (select * from paper_metrics_TRAINING  where author =(select author from seed_author) order by random() limit 1) a,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) b,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) c,
+            (select * from paper_metrics_TRAINING where author !=(select author from seed_author) order by random() limit 1) d
+    ORDER BY random() limit 1;
+    
+        insert into stage_2_training_dataset with seed_author as
+(select s.author from paper_metrics_TRAINING s order by random() limit 1)
+    select
+        a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen, a.MeanSentenceLen a_MeanSentenceLen, a.MeanParagraphLen a_MeanParagraphLen, a.DocumentLen a_DocumentLen, a.Commas a_Commas,  a.Semicolons a_Semicolons, a.Exclamations a_Exclamations, a.Buts a_Buts, a.Thats a_Thats, a.This a_This,
+        b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen, b.MeanSentenceLen b_MeanSentenceLen, b.MeanParagraphLen b_MeanParagraphLen, b.DocumentLen b_DocumentLen, b.Commas b_Commas,  b.Semicolons b_Semicolons, b.Exclamations b_Exclamations, b.Buts b_Buts, b.Thats b_Thats, b.This b_This,
+        c.LexicalDiversity c_LexicalDiversity,c.MeanWordLen c_MeanWordLen, c.MeanSentenceLen c_MeanSentenceLen, c.MeanParagraphLen c_MeanParagraphLen, c.DocumentLen c_DocumentLen, c.Commas c_Commas,  c.Semicolons c_Semicolons, c.Exclamations c_Exclamations, c.Buts c_Buts, c.Thats c_Thats, c.This c_This,
+        d.LexicalDiversity d_LexicalDiversity,d.MeanWordLen d_MeanWordLen, d.MeanSentenceLen d_MeanSentenceLen, d.MeanParagraphLen d_MeanParagraphLen, d.DocumentLen d_DocumentLen, d.Commas d_Commas,  d.Semicolons d_Semicolons, d.Exclamations d_Exclamations, d.Buts d_Buts, d.Thats d_Thats, d.This d_This,
+        0 output
+    FROM  (select * from paper_metrics_TRAINING  where author =(select author from seed_author) order by random() limit 1) a,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) b,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) c,
+            (select * from paper_metrics_TRAINING where author !=(select author from seed_author) order by random() limit 1) d
+    ORDER BY random() limit 1;
+
+    end loop;
+
+    RETURN 1;
+END;
+$$  LANGUAGE plpgsql;
+
+
+

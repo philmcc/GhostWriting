@@ -12,6 +12,11 @@ Generate dataset:
 Generate metrics for all files and put them in a csv file.
 Import the csv into a database
 
+
+##################################################################
+### Basic database set up and training / testing split early
+##################################################################
+
 ##Create a table to take the raw metrics:
 CREATE TABLE paper_metrics (
     id serial primary key,
@@ -48,8 +53,19 @@ COPY paper_metrics(Author,Title,LexicalDiversity,MeanWordLen,MeanSentenceLen,Std
 
 ## Tidy up the data by setting the author correctly
 
+create table paper_metrics_clean as select * from paper_metrics;
 update paper_metrics_clean set author = trim(leading '/Users/pmcclarence/Vagrantboxes/GW/vagrant/books/split/' from title) ;
 update paper_metrics_clean set author = substr(author,0 ,length(author)-2);
+
+drop table paper_metrics_TRAINING;
+create table paper_metrics_TRAINING as select * from paper_metrics_clean order by random() limit ((select count(*) from paper_metrics_clean)/0.8);
+
+drop table paper_metrics_testing;
+create table paper_metrics_testing as select * from paper_metrics_clean where id not in (select id from paper_metrics_training);
+
+######################
+######################
+######################
 
 
 
@@ -195,6 +211,7 @@ delete from training_data_04_temp_b;
 ALTER SEQUENCE training_data_04_temp_b_counter_id_seq restart with 1;
 insert into training_data_04_temp_b select * from paper_metrics_clean where id not in (select id from used_ids_04) order by random() limit 30000;
 
+drop table training_data_staging_04;
 create table training_data_staging_04 as select a.id a_id, a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen,a.MeanSentenceLen a_MeanSentenceLen,a.StdevSentenceLen a_StdevSentenceLen , a.MeanParagraphLen a_MeanParagraphLen,a.DocumentLen a_DocumentLen, a.Commas a_Commas,a.Semicolons a_Semicolons,a.Quotes a_Quotes,a.Exclamations a_Exclamations,a.Colons a_Colons,a.Dashes a_Dashes,a.Mdashes a_Mdashes,a.Ands a_Ands ,a.Buts a_Buts,a.Howevers a_Howevers, a.Ifs a_Ifs ,a.Thats a_Thats,a.Mores a_Mores,a.Musts a_Musts,a.Mights a_Mights,a.This a_This ,a.Verys a_Verys,
 b.id b_id, b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen,b.MeanSentenceLen b_MeanSentenceLen,b.StdevSentenceLen b_StdevSentenceLen , b.MeanParagraphLen b_MeanParagraphLen,b.DocumentLen b_DocumentLen, b.Commas b_Commas,b.Semicolons b_Semicolons,b.Quotes b_Quotes,b.Exclamations b_Exclamations,b.Colons b_Colons,b.Dashes b_Dashes,b.Mdashes b_Mdashes,b.Ands b_Ands ,b.Buts b_Buts,b.Howevers b_Howevers, b.Ifs b_Ifs ,b.Thats b_Thats,b.Mores b_Mores,b.Musts b_Musts,b.Mights b_Mights,b.This b_This ,b.Verys b_Verys, 1 output from training_data_temp_a a, training_data_temp_b b where a.counter_id = b.counter_id and a.author != b.author limit 10000;
 
@@ -214,10 +231,10 @@ select * from training_data_staging_04;
 
 
 create table testing_data_staging_04 as select a.id a_id, a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen,a.MeanSentenceLen a_MeanSentenceLen,a.StdevSentenceLen a_StdevSentenceLen , a.MeanParagraphLen a_MeanParagraphLen,a.DocumentLen a_DocumentLen, a.Commas a_Commas,a.Semicolons a_Semicolons,a.Quotes a_Quotes,a.Exclamations a_Exclamations,a.Colons a_Colons,a.Dashes a_Dashes,a.Mdashes a_Mdashes,a.Ands a_Ands ,a.Buts a_Buts,a.Howevers a_Howevers, a.Ifs a_Ifs ,a.Thats a_Thats,a.Mores a_Mores,a.Musts a_Musts,a.Mights a_Mights,a.This a_This ,a.Verys a_Verys,
-b.id b_id, b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen,b.MeanSentenceLen b_MeanSentenceLen,b.StdevSentenceLen b_StdevSentenceLen , b.MeanParagraphLen b_MeanParagraphLen,b.DocumentLen b_DocumentLen, b.Commas b_Commas,b.Semicolons b_Semicolons,b.Quotes b_Quotes,b.Exclamations b_Exclamations,b.Colons b_Colons,b.Dashes b_Dashes,b.Mdashes b_Mdashes,b.Ands b_Ands ,b.Buts b_Buts,b.Howevers b_Howevers, b.Ifs b_Ifs ,b.Thats b_Thats,b.Mores b_Mores,b.Musts b_Musts,b.Mights b_Mights,b.This b_This ,b.Verys b_Verys, 1 output from training_data_temp_a a, training_data_temp_b b where a.counter_id = b.counter_id and a.author != b.author  and a.id not in (select id from used_ids_04 ) and b.id not in (select id from used_ids_04 ) order by random() limit 1000;
+b.id b_id, b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen,b.MeanSentenceLen b_MeanSentenceLen,b.StdevSentenceLen b_StdevSentenceLen , b.MeanParagraphLen b_MeanParagraphLen,b.DocumentLen b_DocumentLen, b.Commas b_Commas,b.Semicolons b_Semicolons,b.Quotes b_Quotes,b.Exclamations b_Exclamations,b.Colons b_Colons,b.Dashes b_Dashes,b.Mdashes b_Mdashes,b.Ands b_Ands ,b.Buts b_Buts,b.Howevers b_Howevers, b.Ifs b_Ifs ,b.Thats b_Thats,b.Mores b_Mores,b.Musts b_Musts,b.Mights b_Mights,b.This b_This ,b.Verys b_Verys, 1 output from training_data_temp_a a, training_data_temp_b b where a.counter_id = b.counter_id and a.author != b.author  and a.id not in (select id from used_ids_04 ) and b.id not in (select id from used_ids_04 ) order by random() limit 10000;
 
 insert into testing_data_staging_04 select a.id a_id, a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen,a.MeanSentenceLen a_MeanSentenceLen,a.StdevSentenceLen a_StdevSentenceLen , a.MeanParagraphLen a_MeanParagraphLen,a.DocumentLen a_DocumentLen, a.Commas a_Commas,a.Semicolons a_Semicolons,a.Quotes a_Quotes,a.Exclamations a_Exclamations,a.Colons a_Colons,a.Dashes a_Dashes,a.Mdashes a_Mdashes,a.Ands a_Ands ,a.Buts a_Buts,a.Howevers a_Howevers, a.Ifs a_Ifs ,a.Thats a_Thats,a.Mores a_Mores,a.Musts a_Musts,a.Mights a_Mights,a.This a_This ,a.Verys a_Verys,
-b.id b_id, b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen,b.MeanSentenceLen b_MeanSentenceLen,b.StdevSentenceLen b_StdevSentenceLen , b.MeanParagraphLen b_MeanParagraphLen,b.DocumentLen b_DocumentLen, b.Commas b_Commas,b.Semicolons b_Semicolons,b.Quotes b_Quotes,b.Exclamations b_Exclamations,b.Colons b_Colons,b.Dashes b_Dashes,b.Mdashes b_Mdashes,b.Ands b_Ands ,b.Buts b_Buts,b.Howevers b_Howevers, b.Ifs b_Ifs ,b.Thats b_Thats,b.Mores b_Mores,b.Musts b_Musts,b.Mights b_Mights,b.This b_This ,b.Verys b_Verys, 0 output from training_data_temp_a a, training_data_temp_b b where a.author = b.author and a_id not in (select id from used_ids_04 ) and b_id not in (select id from used_ids_04 ) order by random() limit 10000;
+b.id b_id, b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen,b.MeanSentenceLen b_MeanSentenceLen,b.StdevSentenceLen b_StdevSentenceLen , b.MeanParagraphLen b_MeanParagraphLen,b.DocumentLen b_DocumentLen, b.Commas b_Commas,b.Semicolons b_Semicolons,b.Quotes b_Quotes,b.Exclamations b_Exclamations,b.Colons b_Colons,b.Dashes b_Dashes,b.Mdashes b_Mdashes,b.Ands b_Ands ,b.Buts b_Buts,b.Howevers b_Howevers, b.Ifs b_Ifs ,b.Thats b_Thats,b.Mores b_Mores,b.Musts b_Musts,b.Mights b_Mights,b.This b_This ,b.Verys b_Verys, 0 output from training_data_temp_a a, training_data_temp_b b where a.author = b.author and a.id not in (select id from used_ids_04 ) and b.id not in (select id from used_ids_04 ) order by random() limit 10000;
 \t
 \o testing_dataset_04.csv
 select * from testing_data_staging_04;
@@ -227,15 +244,17 @@ select * from testing_data_staging_04;
 ### Try with reduced features based on bagged decision trees feature analysis
 #######################
 
-Training
-select * from training_dataset;
-select a_LexicalDiversity,a_MeanWordLen, a_MeanSentenceLen, a_MeanParagraphLen, a_DocumentLen, a_Commas,  a_Semicolons, a_Exclamations, a_Buts, a_Thats, a_This,
-b_LexicalDiversity,b_MeanWordLen, b_MeanSentenceLen, b_MeanParagraphLen, b_DocumentLen, b_Commas,  b_Semicolons, b_Exclamations, b_Buts, b_Thats, b_This, output from training_dataset;
+\t
+\o training_dataset_reduced_04.csv
 
-TEsting
-\o testing_datasetNEW.csv
+Training
 select a_LexicalDiversity,a_MeanWordLen, a_MeanSentenceLen, a_MeanParagraphLen, a_DocumentLen, a_Commas,  a_Semicolons, a_Exclamations, a_Buts, a_Thats, a_This,
-b_LexicalDiversity,b_MeanWordLen, b_MeanSentenceLen, b_MeanParagraphLen, b_DocumentLen, b_Commas,  b_Semicolons, b_Exclamations, b_Buts, b_Thats, b_This, output from testing_dataset;
+b_LexicalDiversity,b_MeanWordLen, b_MeanSentenceLen, b_MeanParagraphLen, b_DocumentLen, b_Commas,  b_Semicolons, b_Exclamations, b_Buts, b_Thats, b_This, output from training_data_staging_04;
+
+Testing
+\o testing_dataset_reduced_04.csv
+select a_LexicalDiversity,a_MeanWordLen, a_MeanSentenceLen, a_MeanParagraphLen, a_DocumentLen, a_Commas,  a_Semicolons, a_Exclamations, a_Buts, a_Thats, a_This,
+b_LexicalDiversity,b_MeanWordLen, b_MeanSentenceLen, b_MeanParagraphLen, b_DocumentLen, b_Commas,  b_Semicolons, b_Exclamations, b_Buts, b_Thats, b_This, output from testing_data_staging_04;
 
 
 #####################
@@ -366,3 +385,53 @@ avg / total       0.95      0.95      0.95     16000
 
 
 From the above 2 - is an increased diversity of authors
+
+
+
+
+CREATE or replace FUNCTION generate_stage_1_training_data(integer)
+RETURNS INTEGER AS $$
+
+BEGIN
+
+    drop table if exists stage_1_training_dataset;
+
+    create table stage_1_training_dataset as
+    with seed_author as
+(select s.author from paper_metrics_TRAINING s order by random() limit 1)
+    select
+        a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen, a.MeanSentenceLen a_MeanSentenceLen, a.MeanParagraphLen a_MeanParagraphLen, a.DocumentLen a_DocumentLen, a.Commas a_Commas,  a.Semicolons a_Semicolons, a.Exclamations a_Exclamations, a.Buts a_Buts, a.Thats a_Thats, a.This a_This,
+        b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen, b.MeanSentenceLen b_MeanSentenceLen, b.MeanParagraphLen b_MeanParagraphLen, b.DocumentLen b_DocumentLen, b.Commas b_Commas,  b.Semicolons b_Semicolons, b.Exclamations b_Exclamations, b.Buts b_Buts, b.Thats b_Thats, b.This b_This,
+        1 output
+    FROM  (select * from paper_metrics_TRAINING  where author =(select author from seed_author) order by random() limit 1) a,
+            (select * from paper_metrics_TRAINING where author !=(select author from seed_author) order by random() limit 1) b
+    ORDER BY random() limit 1;
+
+    for i in 1..$1 LOOP
+        insert into stage_1_training_dataset with seed_author as
+(select s.author from paper_metrics_TRAINING s order by random() limit 1)
+    select
+        a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen, a.MeanSentenceLen a_MeanSentenceLen, a.MeanParagraphLen a_MeanParagraphLen, a.DocumentLen a_DocumentLen, a.Commas a_Commas,  a.Semicolons a_Semicolons, a.Exclamations a_Exclamations, a.Buts a_Buts, a.Thats a_Thats, a.This a_This,
+        b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen, b.MeanSentenceLen b_MeanSentenceLen, b.MeanParagraphLen b_MeanParagraphLen, b.DocumentLen b_DocumentLen, b.Commas b_Commas,  b.Semicolons b_Semicolons, b.Exclamations b_Exclamations, b.Buts b_Buts, b.Thats b_Thats, b.This b_This,
+        1 output
+    FROM  (select * from paper_metrics_TRAINING  where author =(select author from seed_author) order by random() limit 1) a,
+            (select * from paper_metrics_TRAINING where author !=(select author from seed_author) order by random() limit 1) b     
+    ORDER BY random() limit 1;
+    
+        insert into stage_1_training_dataset with seed_author as
+(select s.author from paper_metrics_TRAINING s order by random() limit 1)
+    select
+        a.LexicalDiversity a_LexicalDiversity,a.MeanWordLen a_MeanWordLen, a.MeanSentenceLen a_MeanSentenceLen, a.MeanParagraphLen a_MeanParagraphLen, a.DocumentLen a_DocumentLen, a.Commas a_Commas,  a.Semicolons a_Semicolons, a.Exclamations a_Exclamations, a.Buts a_Buts, a.Thats a_Thats, a.This a_This,
+        b.LexicalDiversity b_LexicalDiversity,b.MeanWordLen b_MeanWordLen, b.MeanSentenceLen b_MeanSentenceLen, b.MeanParagraphLen b_MeanParagraphLen, b.DocumentLen b_DocumentLen, b.Commas b_Commas,  b.Semicolons b_Semicolons, b.Exclamations b_Exclamations, b.Buts b_Buts, b.Thats b_Thats, b.This b_This,
+        0 output
+    FROM  (select * from paper_metrics_TRAINING  where author =(select author from seed_author) order by random() limit 1) a,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) b,
+            (select * from paper_metrics_TRAINING where author =(select author from seed_author) order by random() limit 1) c,
+            (select * from paper_metrics_TRAINING where author !=(select author from seed_author) order by random() limit 1) d
+    ORDER BY random() limit 1;
+
+    end loop;
+
+    RETURN 1;
+END;
+$$  LANGUAGE plpgsql;

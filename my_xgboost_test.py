@@ -4,10 +4,10 @@ from xgboost import XGBClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import accuracy_score
 # load data
-dataset = loadtxt('pima-indians-diabetes.csv', delimiter=",")
+dataset = loadtxt('datasets/training_dataset_04.csv', delimiter="|")
 # split data into X and y
-X = dataset[:,0:8]
-Y = dataset[:,8]
+X = dataset[:,0:46]
+Y = dataset[:,46]
 # split data into train and test sets
 seed=7
 test_size = 0.33
